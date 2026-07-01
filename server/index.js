@@ -14,8 +14,8 @@ app.use(cors({
     origin: process.env.CLIENT_URL,
     credentials: true
 }));
-app.use(cookieParser());  
 
+app.use(cookieParser());
 app.use('/api/payments', paymentsRouter)
 app.use('/api/admin', adminRouter);
 
