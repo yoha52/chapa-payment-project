@@ -1,60 +1,88 @@
-import { useSearchParams } from "react-router-dom";
-import { useState, useEffect } from 'react';
-import axios from "axios";
+import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import axios from 'axios';
+
 function PaymentStatusPage() {
-    // Hardcoded for now — just to design the layout
-    const [searchParams] = useSearchParams(); // try changing this to 'failed' or 'pending' to see how it looks
-    const tx_ref = searchParams.get('tx_ref');
-    const [status, setStatus ]= useState('loading');
+  const [searchParams] = useSearchParams();
+  const tx_ref = searchParams.get('tx_ref');
 
-    useEffect(() => {
-        if (!tx_ref) {
-            setStatus('error');
-            return;
+  const [status, setStatus] = useState('loading');
+  const intervalRef = useRef(null); // stores the interval so we can stop it
+
+  useEffect(() => {
+    if (!tx_ref) {
+      setStatus('error');
+      return;
+    }
+
+    const fetchStatus = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/payments/status/${tx_ref}`
+        );
+        const currentStatus = response.data.status;
+        setStatus(currentStatus);
+
+        // Stop polling once we have a final answer
+        if (currentStatus === 'success' || currentStatus === 'failed') {
+          clearInterval(intervalRef.current);
         }
-        const fetchStatus = async () => {
-            try {
-                const response = await axios.get(
-                    `${import.meta.env.VITE_API_URL}/api/payments/status/${tx_ref}`
-                );
-                setStatus(response.data.status);
-                console.log(status)
-            } catch (error) {
-                console.log('Failed to fetch status:', error)
-                setStatus('error');
-            }
+      } catch (error) {
+        console.error('Failed to fetch status:', error);
+        setStatus('error');
+        clearInterval(intervalRef.current); // stop polling on error too
+      }
+    };
 
-        }
-        fetchStatus();
-    }, [tx_ref])
+    // Fetch immediately on load, then every 3 seconds
+    fetchStatus();
+    intervalRef.current = setInterval(fetchStatus, 3000);
 
+    // Cleanup — stop polling if user navigates away
+    return () => clearInterval(intervalRef.current);
 
-    return (
-        <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px', textAlign: 'center' }}>
-            {status === 'success' && (
-                <>
-                    <h1 style={{ color: 'green', lineHeight: '1.5' }}>✅ Payment Successful</h1>
-                    <p>Thank you! Your payment has been confirmed.</p>
-                </>
-            )}
+  }, [tx_ref]);
 
-            {status === 'failed' && (
-                <>
-                    <h1 style={{ color: 'red' }}>❌ Payment Failed</h1>
-                    <p>Something went wrong with your payment. Please try again.</p>
-                </>
-            )}
+  return (
+    <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px', textAlign: 'center' }}>
+      {status === 'loading' && <p>Checking your payment status...</p>}
 
-            {status === 'pending' && (
-                <>
-                    <h1 style={{ color: 'orange' }}>⏳ Payment Pending</h1>
-                    <p>We're still confirming your payment. Please wait a moment.</p>
-                </>
-            )}
+      {status === 'pending' && (
+        <>
+          <h1 style={{ color: 'orange' }}>⏳ Payment Pending</h1>
+          <p>Confirming your payment, please wait...</p>
+          <p style={{ fontSize: '13px', color: '#888' }}>This updates automatically.</p>
+        </>
+      )}
 
-            <p style={{ color: '#888', fontSize: '14px' }}>Reference: {tx_ref}</p>
-        </div>
-    );
+      {status === 'success' && (
+        <>
+          <h1 style={{ color: 'green' }}>✅ Payment Successful</h1>
+          <p>Thank you! Your payment has been confirmed.</p>
+        </>
+      )}
+
+      {status === 'failed' && (
+        <>
+          <h1 style={{ color: 'red' }}>❌ Payment Failed</h1>
+          <p>Something went wrong with your payment. Please try again.</p>
+        </>
+      )}
+
+      {status === 'error' && (
+        <>
+          <h1 style={{ color: 'gray' }}>⚠️ Unable to Check Status</h1>
+          <p>We couldn't find this transaction.</p>
+        </>
+      )}
+
+      {tx_ref && (
+        <p style={{ color: '#888', fontSize: '14px', marginTop: '20px' }}>
+          Reference: {tx_ref}
+        </p>
+      )}
+    </div>
+  );
 }
 
 export default PaymentStatusPage;
