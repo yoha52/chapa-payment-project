@@ -4,10 +4,10 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('../db.js');
 const authenticateAdmin = require('../middleware/auth');
-const {loginLimiter}=require('../middleware/rateLimiters.js')
+const { loginLimiter } = require('../middleware/rateLimiters.js')
 
 
-router.post('/login',loginLimiter, async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) {
         return res.status(400).json({ error: 'username and password are required' })
@@ -34,10 +34,10 @@ router.post('/login',loginLimiter, async (req, res) => {
         );
         res.cookie('token', token, {
             httpOnly: true,
-            secure: false,
-            sameSite: 'lax',
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
             maxAge: 60 * 60 * 1000
-        })
+        });
         res.status(200).json({ message: "login sucessful" })
 
     } catch (err) {
