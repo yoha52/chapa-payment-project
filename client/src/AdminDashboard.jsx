@@ -7,7 +7,15 @@ function AdminDashboard() {
     const [loading, setloading] = useState(false);
 
     const navigate = useNavigate();
-
+    async function handleLogout() {
+       try{
+         await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/logout`, {}, { withCredentials: true });
+        navigate('/admin/login')
+       }catch(err){
+        console.log(err)
+        navigate('/admin/login')
+       }
+    }
     useEffect(() => {
         const fetchPayments = async () => {
             try {
@@ -37,7 +45,9 @@ function AdminDashboard() {
     return (
         <div style={{ maxWidth: '1000px', margin: '50px auto', padding: '20px', backgroundColor: '#121212', color: '#e0e0e0', borderRadius: '8px' }}>
             <h1 style={{ marginBottom: '20px' }}>Admin Dashboard</h1>
-
+        <div> <button onClick={
+            handleLogout
+        }>logout</button></div>
             <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
                 <thead>
                     {/* Header Row: Jet Black background with Light Gray text */}
