@@ -46,6 +46,20 @@ router.post('/login', loginLimiter, async (req, res) => {
 
     }
 })
+router.post('/logout', async (req, res) => {
+    try {
+        res.clearCookie('token', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            path:'/'
+
+        });
+        res.send('logged out sucessfully')
+    } catch (err) {
+        console.log(err)
+    }
+})
 
 router.get('/payments', authenticateAdmin, async (req, res) => {
     try {
