@@ -8,12 +8,15 @@ const cookieParser = require('cookie-parser');
 require('dotenv').config();
 const app = express();
 app.use(express.json());
-
+const allowedOrigins = ['https://chapa-payment-project.vercel.app', 'https://chapa-payment-project.vercel.app']
 app.set('trust proxy', 1);
 app.use(cors({
-    origin: process.env.CLIENT_URL,
-    credentials: true
-}));
+    origin: function (origin, callback) {
+            if (!origin) return callback(null, true)
+            if (allowedOrigins.includes(origin)) { return callback(null, true) }
+            else {callback(new Error('Not allowed by CORS'));}      
+            },
+             credentials: true}));
 
 app.use(cookieParser());
 app.use('/api/payments', paymentsRouter)
