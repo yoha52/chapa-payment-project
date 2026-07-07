@@ -8,7 +8,7 @@ const cookieParser = require('cookie-parser');
 require('dotenv').config();
 const app = express();
 app.use(express.json());
-const allowedOrigins = ['https://chapa-payment-project.vercel.app', 'https://chapa-payment-project.vercel.app']
+const allowedOrigins = ['https://chapa-payment-project.vercel.app', 'https://chapa-project.netlify.app']
 app.set('trust proxy', 1);
 app.use(cors({
     origin: function (origin, callback) {
